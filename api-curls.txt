@@ -1,0 +1,88 @@
+# Backend Microservices Platform - cURL API Examples
+# Assumes services are running via docker compose on localhost ports:
+# auth-service=8081, order-service=8082, inventory-service=8083
+
+############################
+# 1) AUTH SERVICE (8081)
+############################
+
+# Register new user
+curl -X POST "http://localhost:8081/api/v1/auth/register" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "Password@123",
+    "role": "USER"
+  }'
+
+# Login
+curl -X POST "http://localhost:8081/api/v1/auth/login" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "email": "user@example.com",
+    "password": "Password@123"
+  }'
+
+# Refresh token
+curl -X POST "http://localhost:8081/api/v1/auth/refresh" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refreshToken": "<REFRESH_TOKEN>"
+  }'
+
+# Logout
+curl -X POST "http://localhost:8081/api/v1/auth/logout" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "refreshToken": "<REFRESH_TOKEN>"
+  }'
+
+############################
+# 2) ORDER SERVICE (8082)
+############################
+
+# Create order (USER or ADMIN token required)
+curl -X POST "http://localhost:8082/api/v1/orders" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "description": "Order for 2 keyboards"
+  }'
+
+# Get orders (USER or ADMIN token required)
+curl -X GET "http://localhost:8082/api/v1/orders" \
+  -H "Authorization: Bearer <ACCESS_TOKEN>"
+
+# Cancel order (ADMIN token required)
+curl -X POST "http://localhost:8082/api/v1/orders/<ORDER_ID>/cancel" \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>"
+
+############################
+# 3) INVENTORY SERVICE (8083)
+############################
+
+# Reserve stock
+curl -X POST "http://localhost:8083/api/v1/inventory/reserve" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "productId": 1,
+    "quantity": 2
+  }'
+
+# Release stock
+curl -X POST "http://localhost:8083/api/v1/inventory/release" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "productId": 1,
+    "quantity": 1
+  }'
+
+# Update stock (ADMIN token required)
+curl -X POST "http://localhost:8083/api/v1/inventory/update" \
+  -H "Authorization: Bearer <ADMIN_ACCESS_TOKEN>" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "productId": 1,
+    "name": "Mechanical Keyboard",
+    "quantity": 100
+  }'
