@@ -52,7 +52,8 @@ public class JwtProvider {
 
     private KeyPair createOrGenerateKeyPair(JwtProperties props) {
         try {
-            if (props.getPrivateKey() != null && props.getPublicKey() != null) {
+            if (props.getPrivateKey() != null && !props.getPrivateKey().isBlank()
+                    && props.getPublicKey() != null && !props.getPublicKey().isBlank()) {
                 byte[] privateBytes = Base64.getDecoder().decode(props.getPrivateKey());
                 byte[] publicBytes = Base64.getDecoder().decode(props.getPublicKey());
                 java.security.KeyFactory keyFactory = java.security.KeyFactory.getInstance("RSA");
