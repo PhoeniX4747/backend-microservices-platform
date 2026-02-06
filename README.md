@@ -74,5 +74,3 @@ Auth-specific:
 
 Order/Inventory:
 - `JWT_PUBLIC_KEY_LOCATION` (defaults to `classpath:public.pem`)
-
-
