@@ -1,21 +1,25 @@
 package com.example.inventory.controller;
 
-import com.example.inventory.dto.*;
+import com.example.inventory.dto.InventoryResponse;
+import com.example.inventory.dto.ReleaseStockRequest;
+import com.example.inventory.dto.ReserveStockRequest;
+import com.example.inventory.dto.UpdateStockRequest;
 import com.example.inventory.service.InventoryService;
 import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/v1/inventory")
+@RequiredArgsConstructor
 public class InventoryController {
 
     private final InventoryService inventoryService;
-
-    public InventoryController(InventoryService inventoryService) {
-        this.inventoryService = inventoryService;
-    }
 
     @Operation(summary = "Reserve stock")
     @PostMapping("/reserve")

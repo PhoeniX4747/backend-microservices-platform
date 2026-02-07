@@ -1,7 +1,11 @@
 package com.example.inventory.model;
 
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 
+@Getter
+@Setter
 @Entity
 @Table(name = "products")
 public class Product {
@@ -19,10 +23,4 @@ public class Product {
     @Version
     private Long version;
 
-    public Long getId() { return id; }
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
-    public int getAvailableQuantity() { return availableQuantity; }
-    public void setAvailableQuantity(int availableQuantity) { this.availableQuantity = availableQuantity; }
-    public Long getVersion() { return version; }
 }

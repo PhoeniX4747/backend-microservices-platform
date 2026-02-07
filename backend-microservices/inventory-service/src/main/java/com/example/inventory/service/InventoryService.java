@@ -1,20 +1,21 @@
 package com.example.inventory.service;
 
-import com.example.inventory.dto.*;
+import com.example.inventory.dto.InventoryResponse;
+import com.example.inventory.dto.ReleaseStockRequest;
+import com.example.inventory.dto.ReserveStockRequest;
+import com.example.inventory.dto.UpdateStockRequest;
 import com.example.inventory.exception.ApiException;
 import com.example.inventory.model.Product;
 import com.example.inventory.repository.ProductRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class InventoryService {
 
     private final ProductRepository productRepository;
-
-    public InventoryService(ProductRepository productRepository) {
-        this.productRepository = productRepository;
-    }
 
     @Transactional
     public InventoryResponse reserve(ReserveStockRequest request) {
