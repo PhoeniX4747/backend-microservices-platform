@@ -1,13 +1,5 @@
 package com.example.order.security;
 
-import org.junit.jupiter.api.Test;
-import org.springframework.security.oauth2.jwt.Jwt;
-
-import java.time.Instant;
-import java.util.Map;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
-
 class SecurityConfigTest {
 
 //    @Test

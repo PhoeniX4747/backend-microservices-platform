@@ -5,6 +5,7 @@ import com.example.order.exception.ApiException;
 import com.example.order.model.OrderEntity;
 import com.example.order.model.OrderStatus;
 import com.example.order.repository.OrderRepository;
+import lombok.RequiredArgsConstructor;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -13,13 +14,10 @@ import java.util.List;
 import java.util.UUID;
 
 @Service
+@RequiredArgsConstructor
 public class OrderService {
 
     private final OrderRepository orderRepository;
-
-    public OrderService(OrderRepository orderRepository) {
-        this.orderRepository = orderRepository;
-    }
 
     @Transactional
     public OrderResponse createOrder(Jwt jwt) {
