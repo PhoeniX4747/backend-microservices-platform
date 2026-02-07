@@ -10,12 +10,15 @@ import com.example.auth.security.JwtProperties;
 import com.example.auth.security.JwtProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class AuthService {
@@ -27,17 +30,20 @@ public class AuthService {
     private final PasswordEncoder passwordEncoder;
     private final JwtProvider jwtProvider;
     private final JwtProperties jwtProperties;
+    private final RedisTemplate<String, String> redisTemplate;
 
     public AuthService(UserRepository userRepository,
                        RefreshTokenRepository refreshTokenRepository,
                        PasswordEncoder passwordEncoder,
                        JwtProvider jwtProvider,
-                       JwtProperties jwtProperties) {
+                       JwtProperties jwtProperties,
+                       RedisTemplate<String, String> redisTemplate) {
         this.userRepository = userRepository;
         this.refreshTokenRepository = refreshTokenRepository;
         this.passwordEncoder = passwordEncoder;
         this.jwtProvider = jwtProvider;
         this.jwtProperties = jwtProperties;
+        this.redisTemplate = redisTemplate;
     }
 
     @Transactional
@@ -67,23 +73,41 @@ public class AuthService {
 
     @Transactional
     public AuthResponse refresh(RefreshRequest request) {
-        RefreshToken token = refreshTokenRepository.findByToken(request.refreshToken())
-                .orElseThrow(() -> new ApiException("Invalid refresh token"));
-        if (token.isRevoked() || token.getExpiresAt().isBefore(Instant.now())) {
-            throw new ApiException("Refresh token expired or revoked");
+        String refreshToken = request.refreshToken();
+        String redisKey = buildRedisKey(refreshToken);
+        String userId = redisTemplate.opsForValue().get(redisKey);
+
+        if (userId == null) {
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Invalid refresh token");
         }
+
+        RefreshToken token = refreshTokenRepository.findByToken(refreshToken)
+                .orElseThrow(() -> new ApiException(HttpStatus.UNAUTHORIZED, "Invalid refresh token"));
+
+        if (token.isRevoked() || token.getExpiresAt().isBefore(Instant.now())) {
+            redisTemplate.delete(redisKey);
+            throw new ApiException(HttpStatus.UNAUTHORIZED, "Refresh token expired or revoked");
+        }
+
         token.setRevoked(true);
         refreshTokenRepository.save(token);
+        redisTemplate.delete(redisKey);
+
         return issueTokens(token.getUser());
     }
 
     @Transactional
     public void logout(LogoutRequest request) {
-        RefreshToken token = refreshTokenRepository.findByToken(request.refreshToken())
-                .orElseThrow(() -> new ApiException("Invalid refresh token"));
-        token.setRevoked(true);
-        refreshTokenRepository.save(token);
-        log.info("Refresh token revoked for user id={}", token.getUser().getId());
+        String refreshToken = request.refreshToken();
+        String redisKey = buildRedisKey(refreshToken);
+
+        redisTemplate.delete(redisKey);
+
+        refreshTokenRepository.findByToken(refreshToken).ifPresent(token -> {
+            token.setRevoked(true);
+            refreshTokenRepository.save(token);
+            log.info("Refresh token revoked for user id={}", token.getUser().getId());
+        });
     }
 
     private AuthResponse issueTokens(UserAccount user) {
@@ -96,7 +120,17 @@ public class AuthService {
         refreshToken.setRevoked(false);
         refreshToken.setExpiresAt(Instant.now().plus(jwtProperties.getRefreshTokenDays(), ChronoUnit.DAYS));
         refreshTokenRepository.save(refreshToken);
+        redisTemplate.opsForValue().set(
+                buildRedisKey(refreshTokenValue),
+                user.getId().toString(),
+                jwtProperties.getRefreshTokenDays(),
+                TimeUnit.DAYS
+        );
 
         return new AuthResponse(accessToken, refreshTokenValue, jwtProperties.getAccessTokenMinutes() * 60);
+    }
+
+    private String buildRedisKey(String refreshToken) {
+        return "refresh:" + refreshToken;
     }
 }

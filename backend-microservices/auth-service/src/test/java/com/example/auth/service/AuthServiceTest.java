@@ -14,6 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.Optional;
@@ -29,6 +30,7 @@ class AuthServiceTest {
     @Mock private RefreshTokenRepository refreshTokenRepository;
     @Mock private PasswordEncoder passwordEncoder;
     @Mock private JwtProvider jwtProvider;
+    @Mock private RedisTemplate<String, String> redisTemplate;
 
     private AuthService authService;
 
@@ -37,7 +39,7 @@ class AuthServiceTest {
         JwtProperties props = new JwtProperties();
         props.setAccessTokenMinutes(15);
         props.setRefreshTokenDays(7);
-        authService = new AuthService(userRepository, refreshTokenRepository, passwordEncoder, jwtProvider, props);
+        authService = new AuthService(userRepository, refreshTokenRepository, passwordEncoder, jwtProvider, props, redisTemplate);
     }
 
     @Test
