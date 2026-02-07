@@ -2,6 +2,7 @@ package com.example.order.service;
 
 import com.example.order.client.InventoryFeignClient;
 import com.example.order.dto.CreateOrderRequest;
+import com.example.order.dto.InventoryResponse;
 import com.example.order.dto.OrderResponse;
 import com.example.order.dto.ReleaseStockRequest;
 import com.example.order.dto.ReserveStockRequest;
@@ -36,11 +37,12 @@ public class OrderService {
 
         try {
             ReserveStockRequest reserveRequest = new ReserveStockRequest(savedOrder.getProductId(), savedOrder.getQuantity());
-            inventoryFeignClient.reserve(reserveRequest);
+            InventoryResponse inventoryResponse = inventoryFeignClient.reserve(reserveRequest);
+            validateInventoryResponse(inventoryResponse, savedOrder.getProductId());
 
             savedOrder.setStatus(OrderStatus.CONFIRMED);
             return map(orderRepository.save(savedOrder));
-        } catch (FeignException ex) {
+        } catch (FeignException | ApiException ex) {
             savedOrder.setStatus(OrderStatus.CANCELLED);
             orderRepository.save(savedOrder);
             throw new ApiException("Order cancelled: unable to reserve inventory");
@@ -67,14 +69,25 @@ public class OrderService {
         if (OrderStatus.CONFIRMED.equals(order.getStatus())) {
             try {
                 ReleaseStockRequest releaseRequest = new ReleaseStockRequest(order.getProductId(), order.getQuantity());
-                inventoryFeignClient.release(releaseRequest);
-            } catch (FeignException ex) {
+                InventoryResponse inventoryResponse = inventoryFeignClient.release(releaseRequest);
+                validateInventoryResponse(inventoryResponse, order.getProductId());
+            } catch (FeignException | ApiException ex) {
                 throw new ApiException("Unable to release reserved inventory for cancelled order");
             }
         }
 
         order.setStatus(OrderStatus.CANCELLED);
         return map(orderRepository.save(order));
+    }
+
+
+    private void validateInventoryResponse(InventoryResponse inventoryResponse, Long expectedProductId) {
+        if (inventoryResponse == null || inventoryResponse.productId() == null) {
+            throw new ApiException("Inventory response is invalid");
+        }
+        if (!expectedProductId.equals(inventoryResponse.productId())) {
+            throw new ApiException("Inventory response product mismatch");
+        }
     }
 
     private OrderResponse map(OrderEntity entity) {
