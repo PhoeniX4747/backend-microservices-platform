@@ -23,9 +23,9 @@ public class OrderController {
     @Operation(summary = "Create order")
     @PreAuthorize("hasAnyRole('USER','ADMIN')")
     @PostMapping
-    public OrderResponse createOrder(@Valid @RequestBody CreateOrderRequest request,
-                                     @AuthenticationPrincipal Jwt jwt) {
-        return orderService.createOrder(jwt);
+    public OrderResponse createOrder(@AuthenticationPrincipal Jwt jwt,
+                                     @Valid @RequestBody CreateOrderRequest request) {
+        return orderService.createOrder(jwt, request);
     }
 
     @Operation(summary = "Get orders")

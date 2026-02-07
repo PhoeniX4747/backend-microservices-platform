@@ -18,3 +18,8 @@ spring:
 logging:
   level:
     root: INFO
+
+
+inventory:
+  service:
+    url: ${INVENTORY_SERVICE_URL:http://localhost:8081}

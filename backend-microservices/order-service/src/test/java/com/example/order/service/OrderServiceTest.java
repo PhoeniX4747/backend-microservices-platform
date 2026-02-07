@@ -9,6 +9,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.oauth2.jwt.Jwt;
+import com.example.order.client.InventoryFeignClient;
 
 import java.time.Instant;
 import java.util.List;
@@ -22,6 +23,7 @@ import static org.mockito.Mockito.when;
 class OrderServiceTest {
 
     @Mock private OrderRepository orderRepository;
+    @Mock private InventoryFeignClient inventoryFeignClient;
     @InjectMocks private OrderService orderService;
 
     @Test
