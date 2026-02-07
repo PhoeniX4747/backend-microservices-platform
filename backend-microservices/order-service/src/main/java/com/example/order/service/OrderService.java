@@ -2,6 +2,7 @@ package com.example.order.service;
 
 import com.example.order.dto.CreateOrderRequest;
 import com.example.order.dto.OrderResponse;
+import com.example.order.dto.ReleaseStockRequest;
 import com.example.order.dto.ReserveStockRequest;
 import com.example.order.exception.ApiException;
 import com.example.order.model.OrderEntity;
@@ -74,6 +75,25 @@ public class OrderService {
     @Transactional
     public OrderResponse cancelOrder(Long id) {
         OrderEntity order = orderRepository.findById(id).orElseThrow(() -> new ApiException("Order not found"));
+
+        if (OrderStatus.CANCELLED.equals(order.getStatus())) {
+            throw new ApiException("Order already cancelled");
+        }
+
+        if (OrderStatus.CONFIRMED.equals(order.getStatus())) {
+            try {
+                ReleaseStockRequest releaseRequest = new ReleaseStockRequest(order.getProductId(), order.getQuantity());
+                restTemplate.exchange(
+                        inventoryServiceUrl + "/api/v1/inventory/release",
+                        HttpMethod.POST,
+                        new HttpEntity<>(releaseRequest),
+                        Void.class
+                );
+            } catch (RestClientException ex) {
+                throw new ApiException("Unable to release reserved inventory for cancelled order");
+            }
+        }
+
         order.setStatus(OrderStatus.CANCELLED);
         return map(orderRepository.save(order));
     }
